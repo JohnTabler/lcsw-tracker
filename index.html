@@ -1233,7 +1233,9 @@ async function generateHourLogPdf(){
           const bytes=new Uint8Array(binStr.length);
           for(let i=0;i<binStr.length;i++)bytes[i]=binStr.charCodeAt(i);
           const pdfDoc=await PDFDocument.load(bytes,{ignoreEncryption:true});
-          const form=pdfDoc.getForm();
+const form=pdfDoc.getForm();
+const {PDFName,PDFString,StandardFonts}=PDFLib;
+const helvetica=await pdfDoc.embedFont(StandardFonts.Helvetica);
 
           // Aggressively override auto-sizing on every field in the PDF
           const {PDFName,PDFNumber,PDFString}=PDFLib;
