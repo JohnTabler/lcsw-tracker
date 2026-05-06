@@ -27,13 +27,13 @@
     --shadow:    0 1px 3px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
     --shadow-lg: 0 8px 32px rgba(0,0,0,.5);
     /* ── TYPE SCALE ── */
-    --fs-xs:   0.75rem;
-    --fs-sm:   0.82rem;
-    --fs-base: 0.90rem;
-    --fs-md:   1.05rem;
-    --fs-lg:   1.25rem;
-    --fs-xl:   1.50rem;
-    --fs-stat: 1.75rem;
+    --fs-xs:   0.75rem;   /* labels, badges, table headers */
+    --fs-sm:   0.82rem;   /* secondary text, small UI */
+    --fs-base: 0.90rem;   /* body, inputs, buttons */
+    --fs-md:   1.05rem;   /* card headings */
+    --fs-lg:   1.25rem;   /* section titles */
+    --fs-xl:   1.50rem;   /* logo/login hero */
+    --fs-stat: 1.75rem;   /* stat card numbers */
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { font-size: 15px; }
@@ -1241,7 +1241,7 @@ async function generateHourLogPdf(){
               const f=form.getTextField(name);
               if(f){
                 f.setText(String(val||''));
-                f.setFontSize(8);
+                f.setFontSize(10);
                 f.enableReadOnly();
               }
             }catch(e){}
