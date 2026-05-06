@@ -1171,22 +1171,22 @@ async function generateHourLogPdf(){
     // Field maps for rows 1–10 (inconsistent naming in the PDF)
     const ROW_FIELDS = [
       // Row 1 — special field names
-      {weekOf:'Week of.0.0.0', indSup:'C 1 R 1', grpSup:null, clinical:'3rd column 1', psychotherapy:'C 4 R 1', nonClinical:'C 5 R 1', total:'C6 R 1', totalAlt:'C end Row1.0'},
-      // Row 2
-      {weekOf:'C 2 R 1Week of.0.1.0', indSup:'C 1 R 2', grpSup:'C 2 r 2', clinical:'3rd column 2', psychotherapy:'C 4 R 2', nonClinical:'C5 R 2', total:'C6 R2', totalAlt:'C end row 2'},
+      {weekOf:'Week of.0.0.0',  indSup:'C 1 R 1',  grpSup:null,       clinical:'3rd column 1',  psychotherapy:'C 4 R 1',  nonClinical:'C 5 R 1',  total:'C6 R 1'},
+      {weekOf:'Week of_2.0',    indSup:'C 1 R 2',  grpSup:'C 2 r 2',  clinical:'3rd column 2',  psychotherapy:'C 4 R 2',  nonClinical:'C5 R 2',   total:'C6 R2'},
       // Rows 3–10 are consistent
-      {weekOf:'Week of_2.0', indSup:'C 1 R 3', grpSup:'C 2 R 3', clinical:'3rd column 3', psychotherapy:'C 4 R 3', nonClinical:'C5 R 3', total:'C6 R3', totalAlt:null},
-      {weekOf:'Week of_3.0', indSup:'C 1 R 4', grpSup:'C 2 R 4', clinical:'3rd column 4', psychotherapy:'C 4 R 4', nonClinical:'C5 R 4', total:'C6 R4', totalAlt:'C end row 4'},
-      {weekOf:'Week of_4.0', indSup:'C 1 R 5', grpSup:'C 2 R 5', clinical:'3rd column 5', psychotherapy:'C 4 R 5', nonClinical:'C5 R 5', total:'C6 R5', totalAlt:'C end row 5'},
-      {weekOf:'Week of_5.0', indSup:'C 1 R 6', grpSup:'C 2 R 6', clinical:'3rd column 6', psychotherapy:'C 4 R 6', nonClinical:'C5 R 6', total:'C6 R6', totalAlt:'C end R6'},
-      {weekOf:'Week of_6.0', indSup:'C 1 R 7', grpSup:'C 2 R 7', clinical:'3rd column 7', psychotherapy:'C 4 R 7', nonClinical:'C5 R 7', total:'C6 R7', totalAlt:'C end R 7'},
-      {weekOf:'Week of_7.0', indSup:'C 1 R 8', grpSup:'C2 R 8', clinical:'3rd column 8', psychotherapy:'C 4 R 8', nonClinical:'C5 R 8', total:'C6 R8', totalAlt:'C end R 8'},
-      {weekOf:'Week of_8.0', indSup:'C 1 R 9', grpSup:'C 2 R 9', clinical:'3rd column 9', psychotherapy:'C 4 R 9', nonClinical:'C5 R 9', total:'C6 R9', totalAlt:'C end Row9'},
-      {weekOf:'Week of_9.0', indSup:'C 1 R 10', grpSup:'C 2 R 10', clinical:'3rd column 10', psychotherapy:'C 4 R 10', nonClinical:'C5 R 10', total:'C6 R10', totalAlt:'C end Row10'},
+      {weekOf:'Week of_3.0',    indSup:'C 1 R 3',  grpSup:'C 2 R 3',  clinical:'3rd column 3',  psychotherapy:'C 4 R 3',  nonClinical:'C5 R 3',   total:'C6 R3'},
+      {weekOf:'Week of_4.0',    indSup:'C 1 R 4',  grpSup:'C 2 R 4',  clinical:'3rd column 4',  psychotherapy:'C 4 R 4',  nonClinical:'C5 R 4',   total:'C6 R4'},
+      {weekOf:'Week of_5.0',    indSup:'C 1 R 5',  grpSup:'C 2 R 5',  clinical:'3rd column 5',  psychotherapy:'C 4 R 5',  nonClinical:'C5 R 5',   total:'C6 R5'},
+      {weekOf:'Week of_6.0',    indSup:'C 1 R 6',  grpSup:'C 2 R 6',  clinical:'3rd column 6',  psychotherapy:'C 4 R 6',  nonClinical:'C5 R 6',   total:'C6 R6'},
+      {weekOf:'Week of_7.0',    indSup:'C 1 R 7',  grpSup:'C 2 R 7',  clinical:'3rd column 7',  psychotherapy:'C 4 R 7',  nonClinical:'C5 R 7',   total:'C6 R7'},
+      {weekOf:'Week of_8.0',    indSup:'C 1 R 8',  grpSup:'C2 R 8',   clinical:'3rd column 8',  psychotherapy:'C 4 R 8',  nonClinical:'C5 R 8',   total:'C6 R8'},
+      {weekOf:'Week of_9.0',    indSup:'C 1 R 9',  grpSup:'C 2 R 9',  clinical:'3rd column 9',  psychotherapy:'C 4 R 9',  nonClinical:'C5 R 9',   total:'C6 R9'},
+      {weekOf:'Week of_10.0',   indSup:'C 1 R 10', grpSup:'C 2 R 10', clinical:'3rd column 10', psychotherapy:'C 4 R 10', nonClinical:'C5 R 10',  total:'C6 R10'},
     ];
 
     // Totals row (row 11)
-    const TOTALS_FIELDS = {indSup:'C 1 R 11', grpSup:'C2 R 11', psychotherapy:'C 4 R 11', nonClinical:'C5 R 11', total:'C6 R11', totalAlt:'C endRow11', totalHrs:'C 3 Total Hours Per Week A  B  C CRow11.0'};
+    const TOTALS_FIELDS = {indSup:'C 1 R 11', grpSup:'C2 R 11', clinical:'C 3 Total Hours Per Week A  B  C CRow11.0', psychotherapy:'C 4 R 11', nonClinical:'C5 R 11', total:'C6 R11'};
+    // C endRow11 = Supervisor Signature — intentionally excluded
 
     const pdfBytes=[];
 
@@ -1224,12 +1224,19 @@ async function generateHourLogPdf(){
           const binStr=atob(HOURLOG_PDF_B64);
           const bytes=new Uint8Array(binStr.length);
           for(let i=0;i<binStr.length;i++)bytes[i]=binStr.charCodeAt(i);
-          const pdfDoc=await PDFDocument.load(bytes);
+          const pdfDoc=await PDFDocument.load(bytes,{ignoreEncryption:true});
           const form=pdfDoc.getForm();
 
           const sf=(name,val)=>{
             if(!name)return;
-            try{const f=form.getTextField(name);if(f)f.setText(String(val||''));}catch(e){}
+            try{
+              const f=form.getTextField(name);
+              if(f){
+                f.setText(String(val||''));
+                f.setFontSize(8);
+                f.enableReadOnly();
+              }
+            }catch(e){}
           };
 
           // Header fields
@@ -1278,6 +1285,8 @@ async function generateHourLogPdf(){
           if(TOTALS_FIELDS.totalAlt)sf(TOTALS_FIELDS.totalAlt,totTotal.toFixed(1));
           if(TOTALS_FIELDS.totalHrs)sf(TOTALS_FIELDS.totalHrs,totTotal.toFixed(1));
 
+          // Flatten prevents pdf-lib from propagating values across grouped fields
+          form.flatten();
           const saved=await pdfDoc.save();
           const pageLabel=pageIdx>0?`_p${pageIdx+1}`:'';
           pdfBytes.push({bytes:saved,name:`${supInfo.name.replace(/[^a-z0-9]/gi,'_').toLowerCase()}_${yr}${pageLabel}`});
