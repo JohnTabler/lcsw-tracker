@@ -1240,14 +1240,15 @@ async function generateHourLogPdf(){
           const sf=(name,val)=>{
             if(!name)return;
             try{
-              const f=form.getTextField(name);
-              if(f){
-                f.setText(String(val||''));
-                f.setFontSize(9);
-                f.enableReadOnly();
-              }
-            }catch(e){}
-          };
+          const f=form.getTextField(name);
+            if(f){
+            f.setText(String(val||''));
+            f.setFontSize(9);
+            f.defaultUpdateAppearances(helvetica);
+            f.enableReadOnly();
+           }
+          }catch(e){}
+        };
 
           // Header fields
           sf('Name of TraineeAssociate Last',lastName);
