@@ -1310,6 +1310,8 @@ const helvetica=await pdfDoc.embedFont(StandardFonts.Helvetica);
           if(TOTALS_FIELDS.totalHrs)sf(TOTALS_FIELDS.totalHrs,totTotal.toFixed(1));
 
           // Flatten prevents pdf-lib from propagating values across grouped fields
+          // Regenerate all appearance streams with consistent font, then flatten
+          form.updateFieldAppearances(helvetica);
           form.flatten();
           const saved=await pdfDoc.save();
           const pageLabel=pageIdx>0?`_p${pageIdx+1}`:'';
