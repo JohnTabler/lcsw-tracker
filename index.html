@@ -1239,12 +1239,13 @@ async function generateHourLogPdf(){
           const {PDFName,PDFNumber,PDFString}=PDFLib;
           const daString=PDFString.of('/Helv 9 Tf 0 g');
           form.getFields().forEach(field=>{
-            try{
-              const dict=field.acroField.dict;
-              dict.set(PDFName.of('DA'),daString);
-              if(field.setFontSize)field.setFontSize(9);
-            }catch(e){}
-          });
+  try{
+    const dict=field.acroField.dict;
+    dict.set(PDFName.of('DA'),daString);
+    dict.delete(PDFName.of('AP'));
+    if(field.setFontSize)field.setFontSize(9);
+  }catch(e){}
+});
 
           const sf=(name,val)=>{
             if(!name)return;
