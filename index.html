@@ -1241,8 +1241,8 @@ async function generateHourLogPdf(){
     const f=form.getTextField(name);
     if(f){
       f.setText(String(val||''));
-      f.setFontSize(10);
-      f.acroField.setDefaultAppearance('/ArialMT 9 Tf 0 g');
+      f.setFontSize(9);
+      f.acroField.setDefaultAppearance('/Helv 9 Tf 0 g');
       f.enableReadOnly();
     }
   }catch(e){}
