@@ -1244,7 +1244,7 @@ async function generateHourLogPdf(){
               const f=form.getTextField(name);
               if(f){
                 f.setText(String(val||''));
-                f.setFontSize(9);
+                f.setFontSize(PDF_FONT_SIZE);
                 f.enableReadOnly();
               }
             }catch(e){}
