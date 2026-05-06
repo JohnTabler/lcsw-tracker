@@ -1236,7 +1236,7 @@ async function generateHourLogPdf(){
           const form=pdfDoc.getForm();
           const {StandardFonts}=PDFLib;
           const helvetica=await pdfDoc.embedFont(StandardFonts.Helvetica);
-          const PDF_FONT_SIZE=8; // ← change this to adjust form font size
+          const PDF_FONT_SIZE=4; // ← change this to adjust form font size
 
           const sf=(name,val)=>{
             if(!name)return;
