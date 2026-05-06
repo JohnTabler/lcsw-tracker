@@ -1236,16 +1236,17 @@ async function generateHourLogPdf(){
           const form=pdfDoc.getForm();
 
           const sf=(name,val)=>{
-            if(!name)return;
-            try{
-              const f=form.getTextField(name);
-              if(f){
-                f.setText(String(val||''));
-                f.setFontSize(10);
-                f.enableReadOnly();
-              }
-            }catch(e){}
-          };
+  if(!name)return;
+  try{
+    const f=form.getTextField(name);
+    if(f){
+      f.setText(String(val||''));
+      f.setFontSize(10);
+      f.acroField.setDefaultAppearance('/ArialMT 9 Tf 0 g');
+      f.enableReadOnly();
+    }
+  }catch(e){}
+};
 
           // Header fields
           sf('Name of TraineeAssociate Last',lastName);
