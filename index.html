@@ -1237,13 +1237,16 @@ async function generateHourLogPdf(){
           const {StandardFonts}=PDFLib;
           const helvetica=await pdfDoc.embedFont(StandardFonts.Helvetica);
 
+          const PDF_FONT_SIZE=8; // ← change this number to adjust form font size
+
           const sf=(name,val)=>{
             if(!name)return;
             try{
               const f=form.getTextField(name);
               if(f){
                 f.setText(String(val||''));
-                f.setFontSize(8);
+                f.setFontSize(PDF_FONT_SIZE);
+                f.updateAppearances(helvetica);
                 f.enableReadOnly();
               }
             }catch(e){}
@@ -1296,8 +1299,6 @@ async function generateHourLogPdf(){
           if(TOTALS_FIELDS.totalHrs)sf(TOTALS_FIELDS.totalHrs,totTotal.toFixed(1));
 
           // Flatten prevents pdf-lib from propagating values across grouped fields
-          // Regenerate all appearance streams with consistent font, then flatten
-          form.updateFieldAppearances(helvetica);
           form.flatten();
           const saved=await pdfDoc.save();
           const pageLabel=pageIdx>0?`_p${pageIdx+1}`:'';
