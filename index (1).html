@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LCSW Hour Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── DESIGN TOKENS ── */
+  :root {
+    --bg:        #0F1117;
+    --surface:   #1A1D27;
+    --surface-2: #22263A;
+    --border:    #2E3349;
+    --ink:       #E8EAF0;
+    --ink-2:     #8B91A8;
+    --ink-3:     #555C78;
+    --accent:    #4F8EF7;
+    --accent-lt: #1A2A4A;
+    --warn:      #F5A623;
+    --warn-lt:   #2A1F0A;
+    --danger:    #F25C5C;
+    --danger-lt: #2A0F0F;
+    --radius:    10px;
+    --shadow:    0 1px 3px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,.5);
+  }
+
+  /* ── RESET ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    position: fixed; inset: 0;
+    background: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    transition: opacity .4s ease;
+  }
+  #login-screen.hidden { opacity: 0; pointer-events: none; }
+  .login-box {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 48px 40px;
+    width: 100%; max-width: 380px;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+  }
+  .login-box .logo {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.8rem;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .login-box .tagline {
+    font-size: .8rem;
+    color: var(--ink-3);
+    font-family: 'Inter', sans-serif;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+  .login-box input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'Inter', sans-serif;
+    font-size: .95rem;
+    background: var(--bg);
+    color: var(--ink);
+    outline: none;
+    transition: border-color .2s;
+    margin-bottom: 14px;
+  }
+  .login-box input:focus { border-color: var(--accent); }
+  .login-box .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+  }
+  .login-box .btn-primary:hover { background: #3a7ae0; }
+  .login-box .btn-primary:active { transform: scale(.98); }
+  #login-error {
+    color: var(--danger);
+    font-size: .82rem;
+    margin-top: 10px;
+    min-height: 18px;
+  }
+  #setup-hint {
+    font-size: .78rem;
+    color: var(--ink-3);
+    margin-top: 16px;
+  }
+
+  /* ── APP SHELL ── */
+  #app { display: none; min-height: 100vh; }
+  #app.visible { display: block; }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--ink);
+    color: #fff;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 58px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-logo {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #fff;
+    letter-spacing: -.01em;
+  }
+  .header-logo span { color: #7EB8FF; }
+  .header-right {
+    display: flex; align-items: center; gap: 20px;
+  }
+  .header-right .week-badge {
+    font-family: 'Inter', sans-serif;
+    font-size: .72rem;
+    color: #A0A0A0;
+    letter-spacing: .05em;
+  }
+  #logout-btn {
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.2);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: .8rem;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background .2s;
+  }
+  #logout-btn:hover { background: rgba(255,255,255,.18); }
+
+  /* ── NAV TABS ── */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex; gap: 0;
+  }
+  .tab-btn {
+    padding: 14px 22px;
+    border: none; background: none;
+    font-family: 'Inter', sans-serif;
+    font-size: .88rem;
+    font-weight: 500;
+    color: var(--ink-2);
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    margin-bottom: -1px;
+    transition: color .2s, border-color .2s;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── WARNING BANNER ── */
+  #warning-banner {
+    display: none;
+    background: var(--danger-lt);
+    border-bottom: 1px solid #FECACA;
+    padding: 10px 32px;
+    font-size: .83rem;
+    color: var(--danger);
+    font-weight: 500;
+  }
+  #warning-banner.show { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  /* ── MAIN CONTENT ── */
+  main { padding: 32px; max-width: 1100px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── SECTION HEADING ── */
+  .section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .section-sub {
+    font-size: .82rem;
+    color: var(--ink-3);
+    font-family: 'Inter', sans-serif;
+    letter-spacing: .04em;
+    margin-bottom: 28px;
+  }
+
+  /* ── DASHBOARD CARDS ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    box-shadow: var(--shadow);
+  }
+  .stat-card .label {
+    font-size: .72rem;
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--ink-3);
+    margin-bottom: 8px;
+  }
+  .stat-card .value {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 2rem;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .stat-card .sub {
+    font-size: .78rem;
+    color: var(--ink-2);
+    margin-top: 4px;
+  }
+  .stat-card.accent { border-left: 3px solid var(--accent); }
+  .stat-card.warn { border-left: 3px solid var(--warn); }
+  .stat-card.danger { border-left: 3px solid var(--danger); }
+
+  /* ── PROGRESS BARS ── */
+  .progress-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+  .progress-section h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: var(--ink);
+  }
+  .progress-row {
+    margin-bottom: 18px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .progress-label .name {
+    font-size: .85rem;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .progress-label .nums {
+    font-family: 'Inter', sans-serif;
+    font-size: .78rem;
+    color: var(--ink-2);
+  }
+  .progress-track {
+    height: 8px;
+    background: var(--bg);
+    border-radius: 99px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--accent);
+    transition: width .6s ease;
+  }
+  .progress-fill.warn { background: var(--warn); }
+  .progress-fill.danger { background: var(--danger); }
+  .progress-fill.complete { background: #4F8EF7; }
+
+  /* ── WEEK SNAPSHOT ── */
+  .week-snapshot {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    box-shadow: var(--shadow);
+  }
+  .week-snapshot h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+  }
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  .week-item {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+  }
+  .week-item .wlabel {
+    font-size: .7rem;
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--ink-3);
+    margin-bottom: 4px;
+  }
+  .week-item .wvalue {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.4rem;
+  }
+  .week-item.ok .wvalue { color: var(--accent); }
+  .week-item.warn .wvalue { color: var(--warn); }
+  .week-item.danger .wvalue { color: var(--danger); }
+
+  /* ── LOG ENTRY FORM ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+  .card h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .form-group.full { grid-column: 1 / -1; }
+  label {
+    font-size: .75rem;
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  input[type="text"], input[type="date"], input[type="number"],
+  input[type="password"], select, textarea {
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: .9rem;
+    color: var(--ink);
+    background: var(--bg);
+    outline: none;
+    transition: border-color .2s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); background: #fff; }
+  textarea { resize: vertical; min-height: 72px; }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 24px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: .92rem;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+  }
+  .btn-primary:hover { background: #3a7ae0; }
+  .btn-primary:active { transform: scale(.98); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink-2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: .88rem;
+    cursor: pointer;
+    transition: border-color .2s, color .2s;
+  }
+  .btn-secondary:hover { border-color: var(--ink-2); color: var(--ink); }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1.5px solid #FECACA;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: .78rem;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-danger:hover { background: var(--danger-lt); }
+  .btn-edit {
+    background: transparent;
+    color: var(--accent);
+    border: 1.5px solid var(--accent-lt);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: .78rem;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-edit:hover { background: var(--accent-lt); }
+
+  /* ── FORM ALERT ── */
+  #form-warning {
+    display: none;
+    background: var(--warn-lt);
+    border: 1px solid #FDE68A;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: .83rem;
+    color: var(--warn);
+    margin-bottom: 16px;
+  }
+  #form-warning.show { display: block; }
+
+  /* ── ENTRIES TABLE ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .84rem;
+  }
+  thead th {
+    text-align: left;
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--ink-3);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  tbody tr:hover { background: var(--bg); }
+  tbody td {
+    padding: 10px 14px;
+    color: var(--ink);
+    vertical-align: middle;
+  }
+  .cat-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: .72rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+  }
+  .cat-clinical { background: var(--accent-lt); color: var(--accent); }
+  .cat-psychotherapy { background: #DBEAFE; color: #1D4ED8; }
+  .cat-nonclinical { background: #F3E8FF; color: #7E22CE; }
+  .sup-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: .72rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--ink-2);
+    font-family: 'Inter', sans-serif;
+  }
+  .no-entries {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--ink-3);
+    font-size: .88rem;
+  }
+  .filter-row {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .filter-row select { max-width: 180px; }
+  .filter-row input[type="text"] { max-width: 200px; }
+
+  /* ── IMPORT/EXPORT ── */
+  .import-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    background: var(--bg);
+  }
+  .import-zone:hover { border-color: var(--accent); background: var(--accent-lt); }
+  .import-zone input { display: none; }
+  .import-zone p { font-size: .88rem; color: var(--ink-2); margin-top: 8px; }
+  .import-zone .icon { font-size: 2rem; }
+  .action-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+  #import-status {
+    margin-top: 12px;
+    font-size: .82rem;
+    min-height: 20px;
+    padding: 0 4px;
+  }
+  .csv-format {
+    background: var(--ink);
+    color: #E2E8F0;
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: .78rem;
+    line-height: 1.7;
+    margin-top: 16px;
+    overflow-x: auto;
+  }
+
+  /* ── SETTINGS ── */
+  .settings-section { margin-bottom: 28px; }
+  .settings-section h4 {
+    font-weight: 600;
+    margin-bottom: 12px;
+    font-size: .9rem;
+  }
+  .inline-form { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .inline-form .form-group { flex: 1; min-width: 160px; }
+  #settings-msg {
+    font-size: .82rem;
+    min-height: 18px;
+    margin-top: 8px;
+  }
+  .danger-zone {
+    background: var(--danger-lt);
+    border: 1px solid #FECACA;
+    border-radius: var(--radius);
+    padding: 20px 24px;
+  }
+  .danger-zone p { font-size: .85rem; color: var(--danger); margin-bottom: 12px; }
+
+  /* ── PRINT REPORT ── */
+  .report-controls {
+    display: flex; gap: 12px; align-items: center;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  #print-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px;
+    box-shadow: var(--shadow);
+  }
+  .report-header {
+    text-align: center;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+  }
+  .report-header h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+  }
+  .report-header p { font-size: .82rem; color: var(--ink-2); }
+  .report-info-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--ink);
+    margin-bottom: 28px;
+  }
+  .report-info-grid .cell {
+    padding: 8px 14px;
+    border-right: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    font-size: .82rem;
+  }
+  .report-info-grid .cell:nth-child(even) { border-right: none; }
+  .report-info-grid .cell strong {
+    display: block;
+    font-size: .68rem;
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-3);
+    margin-bottom: 2px;
+  }
+  .report-supervisor {
+    margin-bottom: 32px;
+  }
+  .report-supervisor h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    background: var(--ink);
+    color: #fff;
+    padding: 8px 14px;
+    margin-bottom: 0;
+  }
+  .report-sup-info {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    border: 1px solid var(--ink); border-top: none;
+    margin-bottom: 0;
+  }
+  .report-sup-info .cell {
+    padding: 7px 14px;
+    border-right: 1px solid var(--ink);
+    font-size: .8rem;
+  }
+  .report-sup-info .cell:last-child { border-right: none; }
+  .report-sup-info .cell strong {
+    display: block; font-size: .65rem;
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--ink-3); margin-bottom: 2px;
+  }
+  .report-table {
+    width: 100%; border-collapse: collapse;
+    font-size: .78rem; margin-bottom: 12px;
+  }
+  .report-table th {
+    background: #F0EDE8;
+    border: 1px solid var(--ink);
+    padding: 6px 10px;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .report-table td {
+    border: 1px solid #C0B8B0;
+    padding: 5px 10px;
+    vertical-align: top;
+  }
+  .report-table tr:nth-child(even) td { background: #FAFAF8; }
+  .report-totals {
+    background: var(--bg);
+    border: 1px solid var(--ink);
+    padding: 12px 14px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .report-totals .tot {
+    text-align: center;
+  }
+  .report-totals .tot strong {
+    display: block;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+  }
+  .report-totals .tot span {
+    font-size: .65rem;
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--ink-2);
+  }
+  .report-signature {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 24px; margin-top: 40px;
+  }
+  .sig-line { border-top: 1px solid var(--ink); padding-top: 6px; font-size: .78rem; }
+  .report-summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 28px;
+    font-size: .82rem;
+  }
+  .report-summary-table th {
+    background: #F0EDE8;
+    border: 1px solid var(--ink);
+    padding: 7px 12px;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    font-size: .68rem;
+    text-transform: uppercase;
+  }
+  .report-summary-table td {
+    border: 1px solid #C0B8B0;
+    padding: 6px 12px;
+  }
+
+  /* ── UTILITIES ── */
+  .text-success { color: #4F8EF7; }
+  .text-warn { color: var(--warn); }
+  .text-danger { color: var(--danger); }
+  .flex { display: flex; }
+  .gap-2 { gap: 8px; }
+  .mt-1 { margin-top: 4px; }
+  .mt-2 { margin-top: 8px; }
+  .mt-4 { margin-top: 16px; }
+  .small { font-size: .78rem; color: var(--ink-2); }
+  .mono { font-family: 'Inter', sans-serif; }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    header, nav, #warning-banner, .report-controls,
+    .tab-panel:not(#tab-report),
+    .section-title, .section-sub { display: none !important; }
+    #tab-report { display: block !important; }
+    #print-area {
+      border: none; box-shadow: none;
+      padding: 0; border-radius: 0;
+    }
+    body { background: #fff; color: #000; }
+    main { padding: 0; max-width: 100%; }
+    /* Override dark theme for print */
+    #print-area { background: #fff; color: #000; }
+    .report-header h1, .report-supervisor h2 { color: #000; }
+    .report-info-grid .cell, .report-sup-info .cell { color: #000; }
+    .report-table td, .report-summary-table td { color: #000; }
+    .report-totals .tot strong, .report-totals .tot span { color: #000; }
+    .sig-line { color: #000; }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    main { padding: 16px; }
+    header { padding: 0 16px; }
+    nav { padding: 0 8px; overflow-x: auto; }
+    .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════ LOGIN ══════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">LCSW Tracker</div>
+    <div class="tagline">California BBS Hour Tracking</div>
+    <input type="password" id="password-input" placeholder="Enter password" autocomplete="current-password">
+    <button class="btn-primary" onclick="handleLogin()">Unlock</button>
+    <div id="login-error"></div>
+    <div id="setup-hint"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ APP ══════════════════════════════ -->
+<div id="app">
+
+  <header>
+    <div class="header-logo">LCSW <span>Tracker</span></div>
+    <div class="header-right">
+      <span class="week-badge" id="header-week"></span>
+      <span id="sync-status" style="font-size:.75rem;font-family:'Inter',sans-serif;color:var(--ink-3)">● Not connected</span>
+      <button id="logout-btn" onclick="logout()">Lock</button>
+    </div>
+  </header>
+
+  <div id="warning-banner"></div>
+
+  <nav>
+    <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('log')">Log Hours</button>
+    <button class="tab-btn" onclick="switchTab('entries')">Entries</button>
+    <button class="tab-btn" onclick="switchTab('import')">Import / Export</button>
+    <button class="tab-btn" onclick="switchTab('report')">Print Report</button>
+    <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+  </nav>
+
+  <main>
+
+    <!-- ── DASHBOARD ── -->
+    <div class="tab-panel active" id="tab-dashboard">
+      <div class="section-title">Dashboard</div>
+      <div class="section-sub" id="dash-date"></div>
+
+      <div class="stat-grid" id="stat-grid"></div>
+
+      <div class="progress-section">
+        <h3>Hour Requirements</h3>
+        <div id="progress-bars"></div>
+      </div>
+
+      <div class="week-snapshot">
+        <h3>This Week</h3>
+        <div class="week-grid" id="week-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── LOG ENTRY ── -->
+    <div class="tab-panel" id="tab-log">
+      <div class="section-title">Log Hours</div>
+      <div class="section-sub">Add a new entry to your supervision log</div>
+
+      <div class="card">
+        <h3 id="form-heading">New Entry</h3>
+        <div id="form-warning"></div>
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="f-date">
+          </div>
+          <div class="form-group">
+            <label>Total Hours</label>
+            <input type="number" id="f-hours" min="0.5" max="24" step="0.5" placeholder="e.g. 4">
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="f-category">
+              <option value="clinical">Clinical (Assessment / Diagnosis / Treatment)</option>
+              <option value="psychotherapy">Face-to-Face Psychotherapy (counts toward 750)</option>
+              <option value="nonclinical">Non-Clinical (Advocacy / Research / Training)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Supervision Received</label>
+            <select id="f-supervision">
+              <option value="none">None this session</option>
+              <option value="individual">Individual / Triadic</option>
+              <option value="group">Group</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Supervisor</label>
+            <select id="f-supervisor"></select>
+          </div>
+          <div class="form-group">
+            <label>Employer / Setting</label>
+            <input type="text" id="f-employer" placeholder="e.g. Community Mental Health Center">
+          </div>
+          <div class="form-group full">
+            <label>Notes (optional)</label>
+            <textarea id="f-notes" placeholder="Client type, modality, or other notes..."></textarea>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn-primary" onclick="saveEntry()">Save Entry</button>
+          <button class="btn-secondary" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">Cancel Edit</button>
+        </div>
+        <div id="save-msg" class="mt-2 small"></div>
+      </div>
+    </div>
+
+    <!-- ── ENTRIES ── -->
+    <div class="tab-panel" id="tab-entries">
+      <div class="section-title">All Entries</div>
+      <div class="section-sub" id="entries-count"></div>
+
+      <div class="card">
+        <div class="filter-row">
+          <select id="filter-cat" onchange="renderEntries()">
+            <option value="">All Categories</option>
+            <option value="clinical">Clinical</option>
+            <option value="psychotherapy">Psychotherapy</option>
+            <option value="nonclinical">Non-Clinical</option>
+          </select>
+          <select id="filter-sup" onchange="renderEntries()">
+            <option value="">All Supervisors</option>
+          </select>
+          <input type="text" id="filter-search" placeholder="Search notes / employer…" oninput="renderEntries()" style="max-width:220px">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Hours</th>
+                <th>Category</th>
+                <th>Supervision</th>
+                <th>Supervisor</th>
+                <th>Employer</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="entries-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── IMPORT / EXPORT ── -->
+    <div class="tab-panel" id="tab-import">
+      <div class="section-title">Import / Export</div>
+      <div class="section-sub">Bring in existing hours or back up your data</div>
+
+      <div class="card">
+        <h3>Import from CSV</h3>
+        <p class="small" style="margin-bottom:14px">Your CSV must have these columns in this order:</p>
+        <div class="csv-format">date, hours, category, supervision_type, supervisor_name, employer, notes<br><br>
+— date: YYYY-MM-DD format (e.g. 2024-03-15)<br>
+— hours: number, increments of 0.5 (e.g. 3.5)<br>
+— category: clinical | psychotherapy | nonclinical<br>
+— supervision_type: individual | group | none<br>
+— supervisor_name: must match a supervisor name in Settings<br>
+— employer: text<br>
+— notes: text (can be blank)</div>
+
+        <div class="import-zone" onclick="document.getElementById('csv-input').click()" style="margin-top:20px">
+          <input type="file" id="csv-input" accept=".csv" onchange="importCSV(this)">
+          <div class="icon">📂</div>
+          <strong>Click to choose a CSV file</strong>
+          <p>or drag and drop here</p>
+        </div>
+        <div id="import-status"></div>
+      </div>
+
+      <div class="card">
+        <h3>Export</h3>
+        <div class="action-row">
+          <button class="btn-primary" onclick="exportCSV()">⬇ Export All Entries (CSV)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PRINT REPORT ── -->
+    <div class="tab-panel" id="tab-report">
+      <div class="report-controls">
+        <div class="section-title" style="margin-bottom:0">Printable Report</div>
+        <button class="btn-primary" onclick="window.print()">🖨 Print / Save as PDF</button>
+        <select id="report-supervisor-filter" onchange="renderReport()">
+          <option value="all">All Supervisors</option>
+        </select>
+      </div>
+      <div id="print-area"></div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="tab-panel" id="tab-settings">
+      <div class="section-title">Settings</div>
+      <div class="section-sub">Configure your supervisors and account</div>
+
+      <div class="card">
+        <h3>Your Information</h3>
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group">
+            <label>Your Full Name</label>
+            <input type="text" id="s-name" placeholder="Jane Smith">
+          </div>
+          <div class="form-group">
+            <label>ASW Registration #</label>
+            <input type="text" id="s-asw" placeholder="ASW 12345">
+          </div>
+          <div class="form-group">
+            <label>Registration Start Date</label>
+            <input type="date" id="s-start">
+          </div>
+          <div class="form-group">
+            <label>Target Completion Date (optional)</label>
+            <input type="date" id="s-target">
+          </div>
+        </div>
+        <button class="btn-primary" onclick="saveSettings()">Save</button>
+        <div id="settings-msg" class="mt-2 small"></div>
+      </div>
+
+      <div class="card">
+        <h3>Supervisors</h3>
+        <div id="supervisors-list" style="margin-bottom:20px"></div>
+        <div id="supervisor-form" style="margin-bottom:16px">
+          <div class="form-grid three" style="margin-bottom:12px">
+            <div class="form-group">
+              <label>Supervisor Name</label>
+              <input type="text" id="sup-name" placeholder="Dr. Jane Doe, LCSW">
+            </div>
+            <div class="form-group">
+              <label>License #</label>
+              <input type="text" id="sup-license" placeholder="LCSW 12345">
+            </div>
+            <div class="form-group">
+              <label>Employer / Agency</label>
+              <input type="text" id="sup-employer" placeholder="Community Mental Health">
+            </div>
+          </div>
+          <button class="btn-primary" onclick="addSupervisor()">Add Supervisor</button>
+          <div id="sup-msg" class="mt-2 small"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>GitHub Sync</h3>
+        <p class="small" style="margin-bottom:16px;color:var(--ink-2)">
+          Your entries and settings are saved as JSON files in your private GitHub repository.
+          Data syncs automatically on every save and loads fresh when you open the app.
+        </p>
+        <div id="gh-status-card" style="margin-bottom:20px"></div>
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="form-group">
+            <label>GitHub Username</label>
+            <input type="text" id="gh-owner" placeholder="your-username" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>Repository Name</label>
+            <input type="text" id="gh-repo" placeholder="lcsw-tracker-data" autocomplete="off">
+          </div>
+          <div class="form-group full">
+            <label>Personal Access Token</label>
+            <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+            <span class="small" style="margin-top:4px;display:block">
+              Needs <strong>repo</strong> scope. Token is stored only in this browser, never synced.
+            </span>
+          </div>
+        </div>
+        <div class="flex gap-2" style="flex-wrap:wrap">
+          <button class="btn-primary" onclick="saveGHSettings()">Save & Connect</button>
+          <button class="btn-secondary" onclick="testGHConnection()">Test Connection</button>
+          <button class="btn-secondary" onclick="manualSync()">↻ Sync Now</button>
+          <button class="btn-danger" onclick="clearGHConfig()">Disconnect</button>
+        </div>
+        <div id="gh-msg" class="small mt-2"></div>
+
+        <details style="margin-top:24px">
+          <summary style="cursor:pointer;font-size:.82rem;color:var(--ink-2);font-weight:500">
+            How to set this up ›
+          </summary>
+          <div style="margin-top:14px;font-size:.82rem;color:var(--ink-2);line-height:1.8">
+            <strong style="color:var(--ink)">Step 1 — Create a private repo</strong><br>
+            Go to <a href="https://github.com/new" target="_blank" style="color:var(--accent)">github.com/new</a>,
+            name it anything (e.g. <code style="background:var(--bg);padding:1px 5px;border-radius:4px">lcsw-tracker-data</code>),
+            set it to <strong>Private</strong>, check "Add a README", click Create.<br><br>
+
+            <strong style="color:var(--ink)">Step 2 — Generate a Personal Access Token</strong><br>
+            Go to <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--accent)">github.com/settings/tokens/new</a><br>
+            • Note: <em>LCSW Tracker</em><br>
+            • Expiration: <em>No expiration</em> (or 1 year)<br>
+            • Scopes: check <strong>repo</strong> (full control of private repositories)<br>
+            • Click "Generate token" — copy it immediately, you won't see it again.<br><br>
+
+            <strong style="color:var(--ink)">Step 3 — Connect</strong><br>
+            Enter your GitHub username, repository name, and the token above, then click Save &amp; Connect.
+            The app will create <code style="background:var(--bg);padding:1px 5px;border-radius:4px">data/entries.json</code>
+            and <code style="background:var(--bg);padding:1px 5px;border-radius:4px">data/settings.json</code> in your repo automatically.<br><br>
+
+            <strong style="color:var(--ink)">⚠ Token security</strong><br>
+            Your token is stored only in this browser's localStorage and is never written to GitHub.
+            Don't share your token or use this app on a public/shared computer without locking it first.
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <h3>Change Password</h3>
+        <div class="settings-section">
+          <div class="inline-form" style="margin-bottom:8px">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" id="pw-current" placeholder="Current password">
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" id="pw-new" placeholder="New password">
+            </div>
+            <div class="form-group">
+              <label>Confirm New</label>
+              <input type="password" id="pw-confirm" placeholder="Confirm new password">
+            </div>
+            <button class="btn-secondary" onclick="changePassword()" style="margin-bottom:0; align-self:flex-end;">Update</button>
+          </div>
+          <div id="pw-msg" class="small"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Danger Zone</h3>
+        <div class="danger-zone">
+          <p>This will permanently delete ALL entries and settings. This cannot be undone.</p>
+          <button class="btn-danger" onclick="clearAllData()">Delete All Data & Reset</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  CONSTANTS
+// ════════════════════════════════════════════════════════
+const REQUIREMENTS = {
+  total:         { label: 'Total Hours',              target: 3000 },
+  clinical:      { label: 'Clinical Hours',           target: 2000 },
+  psychotherapy: { label: 'Face-to-Face Psychotherapy', target: 750 },
+  nonclinical:   { label: 'Non-Clinical Hours (max)', target: 1000, isMax: true },
+  weeks:         { label: 'Supervised Weeks',         target: 104 },
+};
+const WEEKLY_MAX_TOTAL = 40;
+const WEEKLY_MAX_SUP   = 6;
+const NONCLINICAL_WARN = 900;
+
+// ════════════════════════════════════════════════════════
+//  GITHUB CONFIG  (stored only in localStorage — never synced)
+// ════════════════════════════════════════════════════════
+function getGHConfig() {
+  return JSON.parse(localStorage.getItem('lcsw_gh_config') || '{}');
+}
+function saveGHConfig(c) {
+  localStorage.setItem('lcsw_gh_config', JSON.stringify(c));
+}
+function isGHConfigured() {
+  const c = getGHConfig();
+  return !!(c.token && c.owner && c.repo);
+}
+
+// ════════════════════════════════════════════════════════
+//  GITHUB API HELPERS
+// ════════════════════════════════════════════════════════
+const GH_API = 'https://api.github.com';
+
+async function ghRequest(path, method = 'GET', body = null) {
+  const { token } = getGHConfig();
+  const opts = {
+    method,
+    headers: {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`${GH_API}${path}`, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `GitHub API error ${res.status}`);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+async function ghGetFile(filePath) {
+  const { owner, repo } = getGHConfig();
+  try {
+    const data = await ghRequest(`/repos/${owner}/${repo}/contents/${filePath}`);
+    const content = JSON.parse(atob(data.content.replace(/\n/g, '')));
+    return { content, sha: data.sha };
+  } catch (e) {
+    if (e.message.includes('404') || e.message.includes('Not Found')) return null;
+    throw e;
+  }
+}
+
+async function ghPutFile(filePath, content, sha, commitMsg) {
+  const { owner, repo } = getGHConfig();
+  const body = {
+    message: commitMsg || `Update ${filePath}`,
+    content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
+  };
+  if (sha) body.sha = sha;
+  return ghRequest(`/repos/${owner}/${repo}/contents/${filePath}`, 'PUT', body);
+}
+
+// ════════════════════════════════════════════════════════
+//  SYNC STATE
+// ════════════════════════════════════════════════════════
+const syncState = { entriesSha: null, settingsSha: null, loaded: false };
+
+function setSyncStatus(msg, type = 'idle') {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const icons  = { idle: '●', syncing: '↻', ok: '✓', error: '✗' };
+  const colors = { idle: 'var(--ink-3)', syncing: 'var(--warn)', ok: 'var(--accent)', error: 'var(--danger)' };
+  el.textContent = `${icons[type]} ${msg}`;
+  el.style.color = colors[type];
+}
+
+// ════════════════════════════════════════════════════════
+//  STORAGE HELPERS  (GitHub-backed, localStorage as cache)
+// ════════════════════════════════════════════════════════
+function getData()     { return JSON.parse(localStorage.getItem('lcsw_entries')  || '[]'); }
+function getSettings() { return JSON.parse(localStorage.getItem('lcsw_settings') || '{}'); }
+
+async function saveData(d) {
+  localStorage.setItem('lcsw_entries', JSON.stringify(d));
+  await pushEntries(d);
+}
+async function saveSettings2(s) {
+  localStorage.setItem('lcsw_settings', JSON.stringify(s));
+  await pushSettings(s);
+}
+
+async function pushEntries(data) {
+  if (!isGHConfigured()) return;
+  setSyncStatus('Saving…', 'syncing');
+  try {
+    const result = await ghPutFile('data/entries.json', data, syncState.entriesSha, 'Update hour entries');
+    syncState.entriesSha = result.content.sha;
+    setSyncStatus('Saved to GitHub', 'ok');
+    setTimeout(() => setSyncStatus('Connected', 'ok'), 2500);
+  } catch (e) {
+    setSyncStatus(`Save failed: ${e.message}`, 'error');
+    console.error('GitHub push error:', e);
+  }
+}
+
+async function pushSettings(data) {
+  if (!isGHConfigured()) return;
+  try {
+    const result = await ghPutFile('data/settings.json', data, syncState.settingsSha, 'Update settings');
+    syncState.settingsSha = result.content.sha;
+  } catch (e) {
+    console.error('GitHub settings push error:', e);
+  }
+}
+
+async function pullFromGitHub() {
+  if (!isGHConfigured()) return false;
+  setSyncStatus('Connecting…', 'syncing');
+  try {
+    const [entriesFile, settingsFile] = await Promise.all([
+      ghGetFile('data/entries.json'),
+      ghGetFile('data/settings.json')
+    ]);
+    if (entriesFile) {
+      localStorage.setItem('lcsw_entries', JSON.stringify(entriesFile.content));
+      syncState.entriesSha = entriesFile.sha;
+    } else { syncState.entriesSha = null; }
+    if (settingsFile) {
+      localStorage.setItem('lcsw_settings', JSON.stringify(settingsFile.content));
+      syncState.settingsSha = settingsFile.sha;
+    } else { syncState.settingsSha = null; }
+    syncState.loaded = true;
+    setSyncStatus('Connected', 'ok');
+    return true;
+  } catch (e) {
+    setSyncStatus(`Connection failed: ${e.message}`, 'error');
+    return false;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  SIMPLE HASH (not cryptographic, fine for local privacy)
+// ════════════════════════════════════════════════════════
+async function hashPassword(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════════
+async function handleLogin() {
+  const pw    = document.getElementById('password-input').value;
+  const err   = document.getElementById('login-error');
+  const stored = localStorage.getItem('lcsw_pw');
+
+  if (!pw) { err.textContent = 'Please enter a password.'; return; }
+
+  const hashed = await hashPassword(pw);
+
+  if (!stored) {
+    // First-time setup
+    localStorage.setItem('lcsw_pw', hashed);
+    unlockApp();
+  } else {
+    if (hashed === stored) {
+      unlockApp();
+    } else {
+      err.textContent = 'Incorrect password.';
+      document.getElementById('password-input').value = '';
+    }
+  }
+}
+
+function unlockApp() {
+  sessionStorage.setItem('lcsw_auth', '1');
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+  setTimeout(() => document.getElementById('login-screen').style.display = 'none', 400);
+  initApp();
+}
+
+function logout() {
+  sessionStorage.removeItem('lcsw_auth');
+  location.reload();
+}
+
+async function changePassword() {
+  const cur  = document.getElementById('pw-current').value;
+  const nw   = document.getElementById('pw-new').value;
+  const conf = document.getElementById('pw-confirm').value;
+  const msg  = document.getElementById('pw-msg');
+  const stored = localStorage.getItem('lcsw_pw');
+  const hCur = await hashPassword(cur);
+  if (hCur !== stored)       { msg.textContent = '✗ Current password incorrect.'; msg.style.color='var(--danger)'; return; }
+  if (!nw)                   { msg.textContent = '✗ New password cannot be empty.'; msg.style.color='var(--danger)'; return; }
+  if (nw !== conf)           { msg.textContent = '✗ Passwords do not match.'; msg.style.color='var(--danger)'; return; }
+  const hNew = await hashPassword(nw);
+  localStorage.setItem('lcsw_pw', hNew);
+  msg.textContent = '✓ Password updated.'; msg.style.color='var(--accent)';
+  ['pw-current','pw-new','pw-confirm'].forEach(id => document.getElementById(id).value='');
+}
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+window.onload = () => {
+  const stored = localStorage.getItem('lcsw_pw');
+  const hint   = document.getElementById('setup-hint');
+  if (!stored) hint.textContent = 'First launch — enter a password to set it up.';
+
+  // Enter key on password
+  document.getElementById('password-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleLogin();
+  });
+
+  if (sessionStorage.getItem('lcsw_auth') === '1') unlockApp();
+};
+
+async function initApp() {
+  // Show cached data immediately so UI isn't blank while fetching
+  loadSettings();
+  renderDashboard();
+  renderEntries();
+  renderReport();
+  setTodayDate();
+  populateSupervisorDropdowns();
+  checkWarnings();
+
+  // Then pull latest from GitHub (overwrites cache if newer)
+  if (isGHConfigured()) {
+    const ok = await pullFromGitHub();
+    if (ok) {
+      loadSettings();
+      renderDashboard();
+      renderEntries();
+      renderReport();
+      populateSupervisorDropdowns();
+      checkWarnings();
+    }
+  } else {
+    setSyncStatus('Not connected — configure GitHub in Settings', 'idle');
+  }
+}
+
+function setTodayDate() {
+  const d = new Date();
+  const iso = d.toISOString().split('T')[0];
+  const el = document.getElementById('f-date');
+  if (el && !el.value) el.value = iso;
+}
+
+// ════════════════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const btns = document.querySelectorAll('.tab-btn');
+  const map = ['dashboard','log','entries','import','report','settings'];
+  const i = map.indexOf(name);
+  if (i >= 0) btns[i].classList.add('active');
+
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'entries')   renderEntries();
+  if (name === 'report')    renderReport();
+  if (name === 'settings')  loadSettings();
+}
+
+// ════════════════════════════════════════════════════════
+//  CALCULATIONS
+// ════════════════════════════════════════════════════════
+function calcTotals(entries) {
+  let clinical = 0, psychotherapy = 0, nonclinical = 0;
+  let indSupHrs = 0, grpSupHrs = 0;
+  entries.forEach(e => {
+    if (e.category === 'clinical')      clinical      += e.hours;
+    if (e.category === 'psychotherapy') { psychotherapy += e.hours; clinical += e.hours; }
+    if (e.category === 'nonclinical')   nonclinical   += e.hours;
+    if (e.supervision === 'individual') indSupHrs     += e.supHours || 0;
+    if (e.supervision === 'group')      grpSupHrs     += e.supHours || 0;
+  });
+  const total = clinical + nonclinical;
+  return { total, clinical, psychotherapy, nonclinical, indSupHrs, grpSupHrs };
+}
+
+function getWeekEntries(entries, refDate) {
+  // Week = Mon–Sun containing refDate
+  const d = refDate ? new Date(refDate) : new Date();
+  const day = d.getDay(); // 0=Sun
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - ((day + 6) % 7));
+  monday.setHours(0,0,0,0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23,59,59,999);
+  return entries.filter(e => {
+    const ed = new Date(e.date + 'T00:00:00');
+    return ed >= monday && ed <= sunday;
+  });
+}
+
+function calcWeeks(entries, startDate) {
+  if (!startDate || !entries.length) return 0;
+  const start = new Date(startDate);
+  const latest = entries.reduce((m, e) => {
+    const d = new Date(e.date + 'T00:00:00');
+    return d > m ? d : m;
+  }, start);
+  const diffMs = latest - start;
+  return Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000)) + 1;
+}
+
+// ════════════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════════════
+function renderDashboard() {
+  const entries  = getData();
+  const settings = getSettings();
+  const totals   = calcTotals(entries);
+  const weeks    = calcWeeks(entries, settings.startDate);
+  const weekEntries = getWeekEntries(entries);
+  const weekTotals  = calcTotals(weekEntries);
+  const weekSupHrs  = weekEntries.reduce((s,e) => {
+    if (e.supervision === 'individual' || e.supervision === 'group') s += (e.supHours||0);
+    return s;
+  }, 0);
+  const weekTotal   = weekTotals.total;
+
+  // Header week info
+  const hw = document.getElementById('header-week');
+  if (hw) hw.textContent = `Week ${weeks} of 104`;
+
+  // Date line
+  const dd = document.getElementById('dash-date');
+  if (dd) dd.textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // Stat cards
+  const sg = document.getElementById('stat-grid');
+  sg.innerHTML = `
+    <div class="stat-card accent">
+      <div class="label">Total Hours</div>
+      <div class="value">${totals.total.toFixed(1)}</div>
+      <div class="sub">${(3000 - totals.total).toFixed(1)} remaining of 3,000</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="label">Clinical Hours</div>
+      <div class="value">${totals.clinical.toFixed(1)}</div>
+      <div class="sub">${Math.max(0, 2000 - totals.clinical).toFixed(1)} remaining of 2,000</div>
+    </div>
+    <div class="stat-card ${totals.psychotherapy >= 750 ? 'accent' : ''}">
+      <div class="label">Face-to-Face Psychotherapy</div>
+      <div class="value">${totals.psychotherapy.toFixed(1)}</div>
+      <div class="sub">${Math.max(0, 750 - totals.psychotherapy).toFixed(1)} remaining of 750</div>
+    </div>
+    <div class="stat-card ${totals.nonclinical >= NONCLINICAL_WARN ? 'warn' : ''}">
+      <div class="label">Non-Clinical Hours</div>
+      <div class="value">${totals.nonclinical.toFixed(1)}</div>
+      <div class="sub">Max 1,000 allowed</div>
+    </div>
+    <div class="stat-card ${weeks >= 104 ? 'accent' : ''}">
+      <div class="label">Supervised Weeks</div>
+      <div class="value">${weeks}</div>
+      <div class="sub">${Math.max(0, 104 - weeks)} weeks remaining</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Total Entries</div>
+      <div class="value">${entries.length}</div>
+      <div class="sub">logged sessions</div>
+    </div>
+  `;
+
+  // Progress bars
+  const pct = (val, target) => Math.min(100, (val / target) * 100).toFixed(1);
+  const pb = document.getElementById('progress-bars');
+  pb.innerHTML = `
+    ${progressBar('Total Hours', totals.total, 3000, pct(totals.total, 3000))}
+    ${progressBar('Clinical Hours', totals.clinical, 2000, pct(totals.clinical, 2000))}
+    ${progressBar('Face-to-Face Psychotherapy', totals.psychotherapy, 750, pct(totals.psychotherapy, 750))}
+    ${progressBar('Non-Clinical (Max 1,000)', totals.nonclinical, 1000, pct(totals.nonclinical, 1000), true)}
+    ${progressBar('Supervised Weeks', weeks, 104, pct(weeks, 104))}
+  `;
+
+  // Week snapshot
+  const wg = document.getElementById('week-grid');
+  wg.innerHTML = `
+    <div class="week-item ${weekTotal > WEEKLY_MAX_TOTAL ? 'danger' : weekTotal > 35 ? 'warn' : 'ok'}">
+      <div class="wlabel">Hours This Week</div>
+      <div class="wvalue">${weekTotal.toFixed(1)}</div>
+    </div>
+    <div class="week-item ${weekSupHrs > WEEKLY_MAX_SUP ? 'danger' : 'ok'}">
+      <div class="wlabel">Supervision Hours</div>
+      <div class="wvalue">${weekSupHrs.toFixed(1)}</div>
+    </div>
+    <div class="week-item ok">
+      <div class="wlabel">Clinical This Week</div>
+      <div class="wvalue">${weekTotals.clinical.toFixed(1)}</div>
+    </div>
+    <div class="week-item ok">
+      <div class="wlabel">Non-Clinical This Week</div>
+      <div class="wvalue">${weekTotals.nonclinical.toFixed(1)}</div>
+    </div>
+  `;
+}
+
+function progressBar(label, val, target, pct, isMax) {
+  let fillClass = '';
+  if (isMax) {
+    if (val >= target) fillClass = 'danger';
+    else if (val >= NONCLINICAL_WARN) fillClass = 'warn';
+  } else {
+    if (pct >= 100) fillClass = 'complete';
+  }
+  return `
+    <div class="progress-row">
+      <div class="progress-label">
+        <span class="name">${label}</span>
+        <span class="nums">${val.toFixed(1)} / ${target} (${pct}%)</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill ${fillClass}" style="width:${pct}%"></div>
+      </div>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════
+//  WARNINGS
+// ════════════════════════════════════════════════════════
+function checkWarnings() {
+  const entries  = getData();
+  const totals   = calcTotals(entries);
+  const weekEntries = getWeekEntries(entries);
+  const weekTotal = calcTotals(weekEntries).total;
+  const weekSupHrs = weekEntries.reduce((s,e) => {
+    if (e.supervision === 'individual' || e.supervision === 'group') s += (e.supHours||0);
+    return s;
+  }, 0);
+
+  const warnings = [];
+  if (weekTotal > WEEKLY_MAX_TOTAL) warnings.push(`⚠ This week: ${weekTotal.toFixed(1)} hrs logged — exceeds 40-hour weekly cap.`);
+  if (weekSupHrs > WEEKLY_MAX_SUP)  warnings.push(`⚠ This week: ${weekSupHrs.toFixed(1)} supervision hrs — exceeds 6-hour weekly cap.`);
+  if (totals.nonclinical >= 1000)   warnings.push(`⚠ Non-clinical hours at or over 1,000 limit (${totals.nonclinical.toFixed(1)} hrs).`);
+  else if (totals.nonclinical >= NONCLINICAL_WARN) warnings.push(`⚠ Non-clinical hours approaching 1,000-hour limit (${totals.nonclinical.toFixed(1)} hrs).`);
+
+  const banner = document.getElementById('warning-banner');
+  if (warnings.length) {
+    banner.innerHTML = warnings.join('&nbsp;&nbsp;|&nbsp;&nbsp;');
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  LOG ENTRY
+// ════════════════════════════════════════════════════════
+let editingId = null;
+
+function saveEntry() {
+  const date       = document.getElementById('f-date').value;
+  const hours      = parseFloat(document.getElementById('f-hours').value);
+  const category   = document.getElementById('f-category').value;
+  const supervision= document.getElementById('f-supervision').value;
+  const supervisor = document.getElementById('f-supervisor').value;
+  const employer   = document.getElementById('f-employer').value.trim();
+  const notes      = document.getElementById('f-notes').value.trim();
+  const msg        = document.getElementById('save-msg');
+  const formWarn   = document.getElementById('form-warning');
+
+  formWarn.classList.remove('show');
+  formWarn.textContent = '';
+
+  if (!date || isNaN(hours) || hours <= 0) {
+    msg.textContent = '✗ Please fill in Date and Hours.';
+    msg.style.color = 'var(--danger)';
+    return;
+  }
+
+  // Check weekly cap
+  const entries = getData();
+  const weekEntries = getWeekEntries(entries, date).filter(e => e.id !== editingId);
+  const weekTotal = calcTotals(weekEntries).total;
+  if (weekTotal + hours > WEEKLY_MAX_TOTAL) {
+    formWarn.textContent = `⚠ Adding ${hours} hrs would bring this week's total to ${(weekTotal + hours).toFixed(1)} hrs — over the 40-hour BBS cap. You can still save, but this will trigger a warning.`;
+    formWarn.classList.add('show');
+  }
+
+  const entry = {
+    id:         editingId || Date.now().toString(),
+    date, hours, category, supervision, supervisor, employer, notes,
+    supHours:   supervision !== 'none' ? hours : 0,
+    createdAt:  new Date().toISOString()
+  };
+
+  let data = getData();
+  if (editingId) {
+    data = data.map(e => e.id === editingId ? entry : e);
+  } else {
+    data.push(entry);
+  }
+  data.sort((a,b) => a.date.localeCompare(b.date));
+  saveData(data);
+
+  msg.textContent = editingId ? '✓ Entry updated.' : '✓ Entry saved.';
+  msg.style.color = 'var(--accent)';
+  editingId = null;
+
+  document.getElementById('f-hours').value  = '';
+  document.getElementById('f-notes').value  = '';
+  document.getElementById('form-heading').textContent = 'New Entry';
+  document.getElementById('cancel-edit-btn').style.display = 'none';
+  setTodayDate();
+
+  renderDashboard();
+  checkWarnings();
+  setTimeout(() => msg.textContent = '', 3000);
+}
+
+function editEntry(id) {
+  const entries = getData();
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+  editingId = id;
+  document.getElementById('f-date').value         = e.date;
+  document.getElementById('f-hours').value        = e.hours;
+  document.getElementById('f-category').value     = e.category;
+  document.getElementById('f-supervision').value  = e.supervision;
+  document.getElementById('f-supervisor').value   = e.supervisor;
+  document.getElementById('f-employer').value     = e.employer;
+  document.getElementById('f-notes').value        = e.notes;
+  document.getElementById('form-heading').textContent = 'Edit Entry';
+  document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+  switchTab('log');
+  window.scrollTo(0, 0);
+}
+
+function cancelEdit() {
+  editingId = null;
+  document.getElementById('f-hours').value  = '';
+  document.getElementById('f-notes').value  = '';
+  document.getElementById('f-employer').value  = '';
+  document.getElementById('form-heading').textContent = 'New Entry';
+  document.getElementById('cancel-edit-btn').style.display = 'none';
+  document.getElementById('form-warning').classList.remove('show');
+  setTodayDate();
+}
+
+function deleteEntry(id) {
+  if (!confirm('Delete this entry? This cannot be undone.')) return;
+  const data = getData().filter(e => e.id !== id);
+  saveData(data);
+  renderEntries();
+  renderDashboard();
+  checkWarnings();
+}
+
+// ════════════════════════════════════════════════════════
+//  ENTRIES TABLE
+// ════════════════════════════════════════════════════════
+const CAT_LABELS = { clinical:'Clinical', psychotherapy:'Psychotherapy', nonclinical:'Non-Clinical' };
+const SUP_LABELS = { individual:'Individual', group:'Group', none:'—' };
+
+function renderEntries() {
+  let entries = getData();
+  const filterCat = document.getElementById('filter-cat')?.value || '';
+  const filterSup = document.getElementById('filter-sup')?.value || '';
+  const search    = (document.getElementById('filter-search')?.value || '').toLowerCase();
+
+  if (filterCat) entries = entries.filter(e => e.category === filterCat);
+  if (filterSup) entries = entries.filter(e => e.supervisor === filterSup);
+  if (search)    entries = entries.filter(e =>
+    (e.notes||'').toLowerCase().includes(search) ||
+    (e.employer||'').toLowerCase().includes(search)
+  );
+
+  entries = [...entries].sort((a,b) => b.date.localeCompare(a.date));
+
+  const cnt = document.getElementById('entries-count');
+  if (cnt) cnt.textContent = `${entries.length} entr${entries.length===1?'y':'ies'} shown`;
+
+  const tbody = document.getElementById('entries-tbody');
+  if (!tbody) return;
+
+  if (!entries.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="no-entries">No entries yet. Log your first hours →</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = entries.map(e => `
+    <tr>
+      <td class="mono">${formatDate(e.date)}</td>
+      <td class="mono">${e.hours}</td>
+      <td><span class="cat-badge cat-${e.category}">${CAT_LABELS[e.category]||e.category}</span></td>
+      <td>${SUP_LABELS[e.supervision]||e.supervision}</td>
+      <td class="small">${e.supervisor||'—'}</td>
+      <td class="small">${e.employer||'—'}</td>
+      <td class="small">${e.notes||'—'}</td>
+      <td>
+        <div class="flex gap-2">
+          <button class="btn-edit" onclick="editEntry('${e.id}')">Edit</button>
+          <button class="btn-danger" onclick="deleteEntry('${e.id}')">Del</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  SETTINGS
+// ════════════════════════════════════════════════════════
+function loadSettings() {
+  const s = getSettings();
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  set('s-name', s.name);
+  set('s-asw',  s.asw);
+  set('s-start', s.startDate);
+  set('s-target', s.targetDate);
+  renderSupervisorList();
+  loadGHSettings();
+}
+
+function saveSettings() {
+  const s = getSettings();
+  s.name       = document.getElementById('s-name').value.trim();
+  s.asw        = document.getElementById('s-asw').value.trim();
+  s.startDate  = document.getElementById('s-start').value;
+  s.targetDate = document.getElementById('s-target').value;
+  saveSettings2(s);
+  const msg = document.getElementById('settings-msg');
+  msg.textContent = '✓ Settings saved.';
+  msg.style.color = 'var(--accent)';
+  renderDashboard();
+  setTimeout(() => msg.textContent = '', 3000);
+}
+
+function addSupervisor() {
+  const name    = document.getElementById('sup-name').value.trim();
+  const license = document.getElementById('sup-license').value.trim();
+  const employer= document.getElementById('sup-employer').value.trim();
+  const msg     = document.getElementById('sup-msg');
+  if (!name) { msg.textContent = '✗ Name required.'; msg.style.color='var(--danger)'; return; }
+  const s = getSettings();
+  if (!s.supervisors) s.supervisors = [];
+  if (s.supervisors.length >= 10) { msg.textContent = '✗ Max 10 supervisors.'; return; }
+  s.supervisors.push({ id: Date.now().toString(), name, license, employer });
+  saveSettings2(s);
+  document.getElementById('sup-name').value = '';
+  document.getElementById('sup-license').value = '';
+  document.getElementById('sup-employer').value = '';
+  msg.textContent = '✓ Supervisor added.';
+  msg.style.color = 'var(--accent)';
+  renderSupervisorList();
+  populateSupervisorDropdowns();
+  setTimeout(() => msg.textContent = '', 3000);
+}
+
+function deleteSupervisor(id) {
+  if (!confirm('Remove this supervisor?')) return;
+  const s = getSettings();
+  s.supervisors = (s.supervisors||[]).filter(x => x.id !== id);
+  saveSettings2(s);
+  renderSupervisorList();
+  populateSupervisorDropdowns();
+}
+
+function renderSupervisorList() {
+  const s = getSettings();
+  const sups = s.supervisors || [];
+  const el = document.getElementById('supervisors-list');
+  if (!el) return;
+  if (!sups.length) {
+    el.innerHTML = '<p class="small" style="color:var(--ink-3)">No supervisors added yet.</p>';
+    return;
+  }
+  el.innerHTML = sups.map(sup => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-weight:500">${sup.name}</div>
+        <div class="small">${sup.license || ''} ${sup.employer ? '· ' + sup.employer : ''}</div>
+      </div>
+      <button class="btn-danger" onclick="deleteSupervisor('${sup.id}')">Remove</button>
+    </div>
+  `).join('');
+}
+
+function populateSupervisorDropdowns() {
+  const s    = getSettings();
+  const sups = s.supervisors || [];
+  const opts = sups.map(x => `<option value="${x.name}">${x.name}</option>`).join('');
+  const noOpt= '<option value="">— No supervisors added yet —</option>';
+
+  ['f-supervisor','filter-sup','report-supervisor-filter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (id === 'filter-sup') {
+      el.innerHTML = '<option value="">All Supervisors</option>' + opts;
+    } else if (id === 'report-supervisor-filter') {
+      el.innerHTML = '<option value="all">All Supervisors</option>' + opts;
+    } else {
+      el.innerHTML = (opts || noOpt);
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  IMPORT / EXPORT
+// ════════════════════════════════════════════════════════
+function importCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text   = e.target.result;
+    const lines  = text.trim().split('\n');
+    const status = document.getElementById('import-status');
+    let   imported = 0, skipped = 0;
+
+    // skip header row if present
+    const startLine = lines[0].toLowerCase().includes('date') ? 1 : 0;
+    const existing  = getData();
+    const newEntries = [...existing];
+
+    for (let i = startLine; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i]);
+      if (cols.length < 6) { skipped++; continue; }
+      const [date, hoursRaw, category, supervision, supervisor, employer, ...notesParts] = cols;
+      const hours = parseFloat(hoursRaw);
+      if (!date || isNaN(hours)) { skipped++; continue; }
+      const validCat = ['clinical','psychotherapy','nonclinical'];
+      const validSup = ['individual','group','none'];
+      const entry = {
+        id:         Date.now().toString() + i,
+        date:       date.trim(),
+        hours,
+        category:   validCat.includes(category.trim()) ? category.trim() : 'clinical',
+        supervision:validSup.includes(supervision.trim()) ? supervision.trim() : 'none',
+        supervisor: supervisor.trim(),
+        employer:   employer.trim(),
+        notes:      notesParts.join(',').trim(),
+        supHours:   (validSup.includes(supervision.trim()) && supervision.trim() !== 'none') ? hours : 0,
+        createdAt:  new Date().toISOString()
+      };
+      newEntries.push(entry);
+      imported++;
+    }
+
+    newEntries.sort((a,b) => a.date.localeCompare(b.date));
+    saveData(newEntries);
+    status.textContent = `✓ Imported ${imported} entries. ${skipped ? skipped + ' rows skipped.' : ''}`;
+    status.style.color = imported ? 'var(--accent)' : 'var(--danger)';
+    renderDashboard();
+    renderEntries();
+    checkWarnings();
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+
+function exportCSV() {
+  const entries = getData();
+  if (!entries.length) { alert('No entries to export.'); return; }
+  const header = 'date,hours,category,supervision_type,supervisor_name,employer,notes\n';
+  const rows   = entries.map(e =>
+    [e.date, e.hours, e.category, e.supervision, e.supervisor||'', e.employer||'', (e.notes||'').replace(/,/g,'；')].join(',')
+  ).join('\n');
+  downloadFile(header + rows, 'lcsw-hours-export.csv', 'text/csv');
+}
+
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+// ════════════════════════════════════════════════════════
+//  PRINT REPORT
+// ════════════════════════════════════════════════════════
+function renderReport() {
+  const entries  = getData();
+  const settings = getSettings();
+  const totals   = calcTotals(entries);
+  const weeks    = calcWeeks(entries, settings.startDate);
+  const supFilter= document.getElementById('report-supervisor-filter')?.value || 'all';
+  const sups     = settings.supervisors || [];
+
+  const area = document.getElementById('print-area');
+  if (!area) return;
+
+  const today = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  // Group entries by supervisor
+  const bySup = {};
+  entries.forEach(e => {
+    const key = e.supervisor || 'Unknown';
+    if (!bySup[key]) bySup[key] = [];
+    bySup[key].push(e);
+  });
+
+  const supKeys = supFilter === 'all' ? Object.keys(bySup) : [supFilter];
+
+  let html = `
+    <div class="report-header">
+      <h1>LICENSED CLINICAL SOCIAL WORKER<br>Experience Verification Log</h1>
+      <p>California Board of Behavioral Sciences &nbsp;·&nbsp; Form 37A-201 (reference)</p>
+      <p>Generated: ${today}</p>
+    </div>
+
+    <div class="report-info-grid">
+      <div class="cell"><strong>Applicant Name</strong>${settings.name || '___________________________'}</div>
+      <div class="cell"><strong>ASW Registration #</strong>${settings.asw || '___________________________'}</div>
+      <div class="cell"><strong>Registration Start Date</strong>${settings.startDate ? formatDate(settings.startDate) : '_______________'}</div>
+      <div class="cell"><strong>Report Generated</strong>${today}</div>
+    </div>
+
+    <h3 style="font-family:'Montserrat',sans-serif;font-weight:700;margin-bottom:12px;font-size:1rem">Hour Summary</h3>
+    <table class="report-summary-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Hours Completed</th>
+          <th>Requirement</th>
+          <th>Remaining</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Total Hours</td>
+          <td>${totals.total.toFixed(1)}</td>
+          <td>3,000 minimum</td>
+          <td>${Math.max(0, 3000 - totals.total).toFixed(1)}</td>
+          <td>${totals.total >= 3000 ? '✓ Met' : 'In Progress'}</td>
+        </tr>
+        <tr>
+          <td>Clinical Hours</td>
+          <td>${totals.clinical.toFixed(1)}</td>
+          <td>2,000 minimum</td>
+          <td>${Math.max(0, 2000 - totals.clinical).toFixed(1)}</td>
+          <td>${totals.clinical >= 2000 ? '✓ Met' : 'In Progress'}</td>
+        </tr>
+        <tr>
+          <td>Face-to-Face Psychotherapy</td>
+          <td>${totals.psychotherapy.toFixed(1)}</td>
+          <td>750 minimum</td>
+          <td>${Math.max(0, 750 - totals.psychotherapy).toFixed(1)}</td>
+          <td>${totals.psychotherapy >= 750 ? '✓ Met' : 'In Progress'}</td>
+        </tr>
+        <tr>
+          <td>Non-Clinical Hours</td>
+          <td>${totals.nonclinical.toFixed(1)}</td>
+          <td>1,000 maximum</td>
+          <td>—</td>
+          <td>${totals.nonclinical > 1000 ? '⚠ Over Limit' : 'OK'}</td>
+        </tr>
+        <tr>
+          <td>Supervised Weeks</td>
+          <td>${weeks}</td>
+          <td>104 minimum</td>
+          <td>${Math.max(0, 104 - weeks)}</td>
+          <td>${weeks >= 104 ? '✓ Met' : 'In Progress'}</td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+
+  // Per-supervisor sections
+  supKeys.forEach(supName => {
+    const supEntries = (bySup[supName] || []).sort((a,b) => a.date.localeCompare(b.date));
+    if (!supEntries.length) return;
+    const supInfo    = sups.find(s => s.name === supName) || {};
+    const supTotals  = calcTotals(supEntries);
+    const supWeeks   = calcWeeks(supEntries, settings.startDate);
+
+    html += `
+      <div class="report-supervisor">
+        <h2>Supervisor: ${supName}</h2>
+        <div class="report-sup-info">
+          <div class="cell"><strong>License #</strong>${supInfo.license || '___________________'}</div>
+          <div class="cell"><strong>Employer / Agency</strong>${supInfo.employer || '___________________'}</div>
+          <div class="cell"><strong>Weeks with this Supervisor</strong>${supWeeks}</div>
+        </div>
+        <table class="report-table" style="margin-top:0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Hours</th>
+              <th>Category</th>
+              <th>Supervision</th>
+              <th>Employer / Setting</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${supEntries.map(e => `
+              <tr>
+                <td>${formatDate(e.date)}</td>
+                <td>${e.hours}</td>
+                <td>${CAT_LABELS[e.category]||e.category}</td>
+                <td>${SUP_LABELS[e.supervision]||e.supervision}</td>
+                <td>${e.employer||''}</td>
+                <td>${e.notes||''}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="report-totals">
+          <div class="tot"><strong>${supTotals.total.toFixed(1)}</strong><span>Total Hours</span></div>
+          <div class="tot"><strong>${supTotals.clinical.toFixed(1)}</strong><span>Clinical</span></div>
+          <div class="tot"><strong>${supTotals.psychotherapy.toFixed(1)}</strong><span>Psychotherapy</span></div>
+          <div class="tot"><strong>${supTotals.nonclinical.toFixed(1)}</strong><span>Non-Clinical</span></div>
+        </div>
+      </div>
+    `;
+  });
+
+  // Signature lines
+  html += `
+    <div class="report-signature">
+      <div>
+        <div class="sig-line">Applicant Signature &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date</div>
+      </div>
+      <div>
+        <div class="sig-line">Supervisor Signature &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date</div>
+      </div>
+    </div>
+    <p style="font-size:.68rem;color:var(--ink-3);margin-top:28px;text-align:center">
+      This report was generated by LCSW Tracker and mirrors the information required on BBS Form 37A-201.
+      Please verify all information before submitting to the California Board of Behavioral Sciences.
+    </p>
+  `;
+
+  area.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════
+//  GITHUB SETTINGS UI
+// ════════════════════════════════════════════════════════
+function loadGHSettings() {
+  const c = getGHConfig();
+  if (c.owner) document.getElementById('gh-owner').value = c.owner;
+  if (c.repo)  document.getElementById('gh-repo').value  = c.repo;
+  if (c.token) document.getElementById('gh-token').value = c.token;
+  renderGHStatusCard();
+}
+
+function renderGHStatusCard() {
+  const el = document.getElementById('gh-status-card');
+  if (!el) return;
+  const c = getGHConfig();
+  if (c.token && c.owner && c.repo) {
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;background:var(--accent-lt);border:1px solid var(--accent);border-radius:8px;padding:12px 16px">
+        <span style="color:var(--accent);font-size:1.1rem">✓</span>
+        <div>
+          <div style="font-weight:600;color:var(--accent);font-size:.88rem">Connected</div>
+          <div class="small">${c.owner}/${c.repo}</div>
+        </div>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;background:var(--warn-lt);border:1px solid var(--warn);border-radius:8px;padding:12px 16px">
+        <span style="color:var(--warn);font-size:1.1rem">●</span>
+        <div style="font-size:.88rem;color:var(--warn)">Not connected — enter your GitHub details below.</div>
+      </div>`;
+  }
+}
+
+async function saveGHSettings() {
+  const owner = document.getElementById('gh-owner').value.trim();
+  const repo  = document.getElementById('gh-repo').value.trim();
+  const token = document.getElementById('gh-token').value.trim();
+  const msg   = document.getElementById('gh-msg');
+  if (!owner || !repo || !token) {
+    msg.textContent = '✗ All three fields are required.'; msg.style.color = 'var(--danger)'; return;
+  }
+  saveGHConfig({ owner, repo, token });
+  msg.textContent = '↻ Testing connection…'; msg.style.color = 'var(--warn)';
+  const ok = await pullFromGitHub();
+  if (ok) {
+    msg.textContent = '✓ Connected! Data loaded from GitHub.'; msg.style.color = 'var(--accent)';
+    renderGHStatusCard();
+    renderDashboard(); renderEntries(); renderReport(); loadSettings(); populateSupervisorDropdowns(); checkWarnings();
+  } else {
+    msg.textContent = '✗ Could not connect. Check your username, repo name, and token.'; msg.style.color = 'var(--danger)';
+  }
+}
+
+async function testGHConnection() {
+  const msg = document.getElementById('gh-msg');
+  if (!isGHConfigured()) { msg.textContent = '✗ Save your settings first.'; msg.style.color='var(--danger)'; return; }
+  msg.textContent = '↻ Testing…'; msg.style.color = 'var(--warn)';
+  try {
+    const { owner, repo } = getGHConfig();
+    await ghRequest(`/repos/${owner}/${repo}`);
+    msg.textContent = '✓ Connection successful!'; msg.style.color = 'var(--accent)';
+  } catch (e) {
+    msg.textContent = `✗ Failed: ${e.message}`; msg.style.color = 'var(--danger)';
+  }
+}
+
+async function manualSync() {
+  const msg = document.getElementById('gh-msg');
+  if (!isGHConfigured()) { msg.textContent = '✗ Not connected.'; msg.style.color='var(--danger)'; return; }
+  msg.textContent = '↻ Syncing…'; msg.style.color = 'var(--warn)';
+  const ok = await pullFromGitHub();
+  if (ok) {
+    msg.textContent = '✓ Sync complete.'; msg.style.color = 'var(--accent)';
+    renderDashboard(); renderEntries(); renderReport(); loadSettings(); populateSupervisorDropdowns(); checkWarnings();
+  } else {
+    msg.textContent = '✗ Sync failed — see sync status in header.'; msg.style.color = 'var(--danger)';
+  }
+}
+
+function clearGHConfig() {
+  if (!confirm('Disconnect from GitHub? Your local cached data will remain, but changes will no longer sync.')) return;
+  localStorage.removeItem('lcsw_gh_config');
+  syncState.entriesSha = null; syncState.settingsSha = null;
+  document.getElementById('gh-owner').value = '';
+  document.getElementById('gh-repo').value  = '';
+  document.getElementById('gh-token').value = '';
+  renderGHStatusCard();
+  setSyncStatus('Not connected', 'idle');
+  const msg = document.getElementById('gh-msg');
+  msg.textContent = 'Disconnected.'; msg.style.color = 'var(--ink-2)';
+}
+
+// ════════════════════════════════════════════════════════
+//  CLEAR DATA
+// ════════════════════════════════════════════════════════
+function clearAllData() {
+  if (!confirm('This will delete ALL entries and settings. This CANNOT be undone. Are you sure?')) return;
+  if (!confirm('Last chance — delete everything?')) return;
+  ['lcsw_entries','lcsw_settings','lcsw_pw'].forEach(k => localStorage.removeItem(k));
+  location.reload();
+}
+
+// ════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════
+function formatDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${m}/${d}/${y}`;
+}
+
+// Drag-and-drop on import zone
+document.addEventListener('DOMContentLoaded', () => {
+  const zone = document.querySelector('.import-zone');
+  if (!zone) return;
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; });
+  zone.addEventListener('dragleave', () => { zone.style.borderColor=''; });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.style.borderColor = '';
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const fakeInput = { files: [file] };
+      importCSV(fakeInput);
+    }
+  });
+});
+</script>
+</body>
+</html>
