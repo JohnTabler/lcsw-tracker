@@ -1238,6 +1238,18 @@ async function generateHourLogPdf(){
           const helvetica=await pdfDoc.embedFont(StandardFonts.Helvetica);
 
           const PDF_FONT_SIZE=8; // ← change this number to adjust form font size
+          const DA_STRING=`/Helv ${PDF_FONT_SIZE} Tf 0 g`;
+          const {PDFString,PDFName}=PDFLib;
+
+          // Set DA at widget level on every field so pdf-lib uses our font size
+          form.getFields().forEach(field=>{
+            try{
+              field.acroField.dict.set(PDFName.of('DA'),PDFString.of(DA_STRING));
+              field.acroField.getWidgets().forEach(w=>{
+                w.dict.set(PDFName.of('DA'),PDFString.of(DA_STRING));
+              });
+            }catch(e){}
+          });
 
           const sf=(name,val)=>{
             if(!name)return;
@@ -1245,7 +1257,6 @@ async function generateHourLogPdf(){
               const f=form.getTextField(name);
               if(f){
                 f.setText(String(val||''));
-                f.setFontSize(PDF_FONT_SIZE);
                 f.updateAppearances(helvetica);
                 f.enableReadOnly();
               }
