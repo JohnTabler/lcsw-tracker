@@ -1252,7 +1252,8 @@ async function generateHourLogPdf(){
               const f=form.getTextField(name);
               if(f){
                 f.setText(String(val||''));
-                f.setFontSize(9);
+                f.setFontSize(10);
+                f.setAlignment(PDFLib.TextAlignment.Center);
                 f.acroField.dict.set(PDFName.of('DA'),daString);
                 f.enableReadOnly();
               }
