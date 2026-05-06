@@ -1257,6 +1257,7 @@ async function generateHourLogPdf(){
               const f=form.getTextField(name);
               if(f){
                 f.setText(String(val||''));
+                f.setAlignment(PDFLib.TextAlignment.Center);
                 f.updateAppearances(helvetica);
                 f.enableReadOnly();
               }
