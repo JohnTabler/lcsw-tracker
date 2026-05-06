@@ -1116,7 +1116,10 @@ async function generateExperiencePdf(){
       for(let i=0;i<binStr.length;i++)bytes[i]=binStr.charCodeAt(i);
       const pdfDoc=await PDFDocument.load(bytes);
       const form=pdfDoc.getForm();
-      const sf=(name,val)=>{try{const f=form.getTextField(name);if(f)f.setText(String(val||''));}catch(e){}};
+      const sf=(name,val)=>{
+            if(!name)return;
+            try{const f=form.getTextField(name);if(f){f.setText(String(val||''));f.setFontSize(8);}}catch(e){}
+          };
       sf('Last',lastName);sf('First',firstName);sf('Middle',middleName);sf('ASW',aswNum);
       sf('From',fromDate?formatDate(fromDate):'');sf('To',toDate?formatDate(toDate):'');
       sf('Supervisors Name',supInfo.name||'');
@@ -1171,7 +1174,7 @@ async function generateHourLogPdf(){
     // Field maps for rows 1–10 (inconsistent naming in the PDF)
     const ROW_FIELDS = [
       // Row 1 — special field names
-      {weekOf:'Week of.0.0.0', indSup:'C 1 R 1', grpSup:null, clinical:'3rd column 1', psychotherapy:'C 4 R 1', nonClinical:'C 5 R 1', total:'C6 R 1', totalAlt:'C end Row1.0'},
+      {weekOf:'Week of.0.0.0', indSup:'C 1 R 1', grpSup:null, clinical:'3rd column 1', psychotherapy:'C 4 R 1', nonClinical:'C 5 R 1', total:'C end Row1.0', totalAlt:null},
       // Row 2
       {weekOf:'C 2 R 1Week of.0.1.0', indSup:'C 1 R 2', grpSup:'C 2 r 2', clinical:'3rd column 2', psychotherapy:'C 4 R 2', nonClinical:'C5 R 2', total:'C6 R2', totalAlt:'C end row 2'},
       // Rows 3–10 are consistent
