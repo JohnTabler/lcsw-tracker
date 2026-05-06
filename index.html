@@ -1233,21 +1233,9 @@ async function generateHourLogPdf(){
           const bytes=new Uint8Array(binStr.length);
           for(let i=0;i<binStr.length;i++)bytes[i]=binStr.charCodeAt(i);
           const pdfDoc=await PDFDocument.load(bytes,{ignoreEncryption:true});
-const form=pdfDoc.getForm();
-const {PDFName,PDFString,StandardFonts}=PDFLib;
-const helvetica=await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-          // Aggressively override auto-sizing on every field in the PDF
-          const {PDFName,PDFNumber,PDFString}=PDFLib;
-          const daString=PDFString.of('/Helv 9 Tf 0 g');
-          form.getFields().forEach(field=>{
-  try{
-    const dict=field.acroField.dict;
-    dict.set(PDFName.of('DA'),daString);
-    dict.delete(PDFName.of('AP'));
-    if(field.setFontSize)field.setFontSize(9);
-  }catch(e){}
-});
+          const form=pdfDoc.getForm();
+          const {PDFName,PDFString,StandardFonts}=PDFLib;
+          const helvetica=await pdfDoc.embedFont(StandardFonts.Helvetica);
 
           const sf=(name,val)=>{
             if(!name)return;
@@ -1255,9 +1243,7 @@ const helvetica=await pdfDoc.embedFont(StandardFonts.Helvetica);
               const f=form.getTextField(name);
               if(f){
                 f.setText(String(val||''));
-                f.setFontSize(10);
-                f.setAlignment(PDFLib.TextAlignment.Center);
-                f.acroField.dict.set(PDFName.of('DA'),daString);
+                f.setFontSize(9);
                 f.enableReadOnly();
               }
             }catch(e){}
